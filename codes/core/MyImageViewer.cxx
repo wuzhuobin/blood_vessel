@@ -14,6 +14,23 @@ PURPOSE.  See the above copyright notice for more information.
 =========================================================================*/
 #include "MyImageViewer.h"
 
+#include <vtkVersion.h>
+#include <vtkInformation.h>
+#include <vtkCamera.h>
+#include <vtkImageProperty.h>
+#include <vtkProperty.h>
+#include <vtkRenderWindow.h>
+#include <vtkCachedStreamingDemandDrivenPipeline.h>
+#include <vtkImageMapper3D.h>
+#include <vtkTextProperty.h>
+#include <vtkPointHandleRepresentation2D.h>
+#include <vtkDistanceRepresentation2D.h>
+#include <vtkAngleRepresentation2D.h>
+#include <vtkAxisActor2D.h>
+#include <vtkProperty2D.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkLeaderActor2D.h>
+
 
 vtkStandardNewMacro(MyImageViewer);
 
@@ -25,7 +42,6 @@ MyImageViewer::MyImageViewer()
 	// Widget 
 	this->DistanceWidget = vtkDistanceWidget::New();
 	this->AngleWidget = vtkAngleWidget::New();
-	this->ContourWidget = vtkContourWidget::New();
 
 	// TextActor 
 	this->IntTextActor = vtkTextActor::New();
@@ -44,20 +60,36 @@ MyImageViewer::MyImageViewer()
 	//Disable the warning
 	//this->WindowLevel->SetGlobalWarningDisplay(false);
 	//this->imageMapToWindowLevelColors->SetGlobalWarningDisplay(false);
-	//set label Look Up Table
+	///set label Look Up Table
+	// wrong
 	this->LookUpTable = vtkLookupTable::New();
 	this->LookUpTable->SetNumberOfTableValues(7);
 	this->LookUpTable->SetTableRange(0.0, 6);
 	this->LookUpTable->SetTableValue(0, 0, 0, 0, 0);
 	this->LookUpTable->SetTableValue(1, 1, 0, 0, 1);
-	this->LookUpTable->SetTableValue(2, 0, 0, 1, 1);
-	this->LookUpTable->SetTableValue(3, 0, 1, 0, 1);
-	this->LookUpTable->SetTableValue(4, 1, 1, 0, 1);
-	this->LookUpTable->SetTableValue(5, 0, 1, 1, 1);
+	this->LookUpTable->SetTableValue(2, 0, 0, 1, 0.3);
+	this->LookUpTable->SetTableValue(3, 0, 1, 0, 0.5);
+	this->LookUpTable->SetTableValue(4, 1, 1, 0, 0.8);
+	this->LookUpTable->SetTableValue(5, 0, 1, 1, 0.9);
 	this->LookUpTable->SetTableValue(6, 1, 0, 1, 1);
 	this->LookUpTable->Build();
 
+	// right
+	//this->LookUpTable = vtkLookupTable::New();
+	//this->LookUpTable->SetNumberOfTableValues(7);
+	//this->LookUpTable->SetTableRange(0.0, 6);
+	//this->LookUpTable->SetTableValue(0, 0, 0, 0, 0);
+	//this->LookUpTable->SetTableValue(1, 1, 0, 0, 0.8);
+	//this->LookUpTable->SetTableValue(2, 0, 0, 1, 0.3);
+	//this->LookUpTable->SetTableValue(3, 0, 1, 0, 0.5);
+	//this->LookUpTable->SetTableValue(4, 1, 1, 0, 0.8);
+	//this->LookUpTable->SetTableValue(5, 0, 1, 1, 0.9);
+	//this->LookUpTable->SetTableValue(6, 1, 0, 1, 1);
+	//this->LookUpTable->Build();
+
+
 	this->drawActor = vtkImageActor::New();
+	this->drawActor->GetProperty()->SetInterpolationTypeToNearest();
 	this->drawActor->GetProperty()->SetLookupTable(LookUpTable);
 	this->drawActor->SetVisibility(false);
 
@@ -83,6 +115,8 @@ MyImageViewer::MyImageViewer()
 	annotationRenderer->SetLayer(1);
 
 	RenderWindow->SetNumberOfLayers(2);
+
+
 }
 
 //----------------------------------------------------------------------------
@@ -103,8 +137,6 @@ MyImageViewer::~MyImageViewer()
 		this->DistanceWidget->Delete();
 	if (this->AngleWidget != NULL)
 		this->AngleWidget->Delete();
-	if (this->ContourWidget != NULL)
-		this->ContourWidget->Delete();
 
 	if (this->imageMapToWindowLevelColors) {
 		this->imageMapToWindowLevelColors->Delete();
@@ -140,6 +172,7 @@ MyImageViewer::~MyImageViewer()
 void MyImageViewer::SetSliceOrientation(int orientation)
 {
 	Superclass::SetSliceOrientation(orientation);
+
 	switch (orientation)
 	{
 	case 0:
@@ -165,6 +198,7 @@ void MyImageViewer::UpdateDisplayExtent()
 	Superclass::UpdateDisplayExtent();
 	vtkAlgorithm *input = this->GetInputAlgorithm();
 	vtkInformation* outInfo = input->GetOutputInformation(0);
+
 	int *w_ext = outInfo->Get(
 		vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT());
 	if (this->GetInputLayer())
@@ -194,20 +228,26 @@ void MyImageViewer::UpdateDisplayExtent()
 void MyImageViewer::InstallPipeline()
 {
 	Superclass::InstallPipeline();
+	// add label view prop to renderer
 	if (this->annotationRenderer && this->drawActor)
 	{
 		this->annotationRenderer->AddViewProp(this->drawActor);
 	}
+
+	// add cursor 
 	if (this->Renderer && this->CursorActor)
 	{
 		this->Renderer->AddActor(this->CursorActor);
 	}
 
+	// Setup connection with window level mapper
 	if (this->drawActor && this->imageMapToWindowLevelColors)
 	{
 		this->drawActor->GetMapper()->SetInputConnection(this->imageMapToWindowLevelColors->GetOutputPort());
 	}
-	if (this->RenderWindow && this->annotationRenderer) {
+
+	// add the renderer to render window if it hasn't been added
+	if (this->RenderWindow && this->annotationRenderer && !this->RenderWindow->HasRenderer(this->annotationRenderer)) {
 		this->RenderWindow->AddRenderer(this->annotationRenderer); 
 	}
 }
@@ -280,6 +320,7 @@ void MyImageViewer::Render()
 			case MyImageViewer::SLICE_ORIENTATION_YZ:
 				xs = w_ext[3] - w_ext[2] + 1;
 				ys = w_ext[5] - w_ext[4] + 1;
+				this->Renderer->GetActiveCamera()->Azimuth(180);
 				break;
 			}
 
@@ -307,6 +348,7 @@ void MyImageViewer::Render()
 	{
 		this->RenderWindow->Render();
 	}
+
 }
 //----------------------------------------------------------------------------
 void MyImageViewer::SetInputData(vtkImageData *in)
@@ -317,6 +359,7 @@ void MyImageViewer::SetInputData(vtkImageData *in)
 	double* range = in->GetScalarRange();
 	this->SetColorWindow(range[1] - range[0]);
 	this->SetColorLevel((range[1] + range[0])*0.5);
+
 	DefaultWindowLevel[0] = this->GetColorWindow();
 	DefaultWindowLevel[1] = this->GetColorLevel();
 
@@ -328,8 +371,10 @@ void MyImageViewer::SetInputData(vtkImageData *in)
 void MyImageViewer::SetInputDataLayer(vtkImageData *in)
 {
 	this->imageMapToWindowLevelColors->SetInputData(in);
+	this->imageMapToWindowLevelColors->Update();
 	this->UpdateDisplayExtent();
 	this->drawActor->SetInputData(this->imageMapToWindowLevelColors->GetOutput());
+	this->drawActor->Update();
 	double* range = LookUpTable->GetRange();
 	imageMapToWindowLevelColors->SetWindow(range[1] - range[0]);
 	imageMapToWindowLevelColors->SetLevel((range[1] + range[0])*0.5);
@@ -382,11 +427,11 @@ void MyImageViewer::SetCursorBoundary()
 	image->GetExtent(extent);
 
 
-	Bound[0] = origin[0];
+	Bound[0] = origin[0] + extent[0] * spacing[0];
 	Bound[1] = origin[0] + extent[1] * spacing[0];
-	Bound[2] = origin[1];
+	Bound[2] = origin[1] + extent[2] * spacing[1];
 	Bound[3] = origin[1] + extent[3] * spacing[1];
-	Bound[4] = origin[2];
+	Bound[4] = origin[2] + extent[4] * spacing[2];
 	Bound[5] = origin[2] + extent[5] * spacing[2];
 
 	Cursor3D->SetTranslationMode(false);
@@ -406,26 +451,26 @@ void MyImageViewer::SetFocalPoint(double x, double y, double z)
 	SliceImplicitPlane->SetOrigin(x, y, z);
 }
 
-void MyImageViewer::AddPolyData(vtkPolyData* polydata, vtkProperty* property)
-{
-	ClipActor = vtkActor::New();
-	//vtkCutter* cutter = vtkCutter::New();
-	//cutter->SetInputData (dataset);
-	//cutter->SetCutFunction (this->SliceImplicitPlane);
-	vtkPolyDataMapper* mapper = vtkPolyDataMapper::New();
-	//mapper->SetInputData(cutter->GetOutput());
-	mapper->SetInputData(polydata);
-	mapper->Update();
-	ClipActor = vtkActor::New();
-	ClipActor->SetMapper(mapper);
-	if (property)
-		ClipActor->SetProperty(property);
-	ClipActor->SetDragable(false);
-	this->Renderer->AddActor(ClipActor);
-	//cutter->Delete();
-	mapper->Delete();
-	//actor->Delete();
-}
+//void MyImageViewer::AddPolyData(vtkPolyData* polydata, vtkProperty* property)
+//{
+//	ClipActor = vtkActor::New();
+//	//vtkCutter* cutter = vtkCutter::New();
+//	//cutter->SetInputData (dataset);
+//	//cutter->SetCutFunction (this->SliceImplicitPlane);
+//	vtkPolyDataMapper* mapper = vtkPolyDataMapper::New();
+//	//mapper->SetInputData(cutter->GetOutput());
+//	mapper->SetInputData(polydata);
+//	mapper->Update();
+//	ClipActor = vtkActor::New();
+//	ClipActor->SetMapper(mapper);
+//	if (property)
+//		ClipActor->SetProperty(property);
+//	ClipActor->SetDragable(false);
+//	this->Renderer->AddActor(ClipActor);
+//	//cutter->Delete();
+//	mapper->Delete();
+//	//actor->Delete();
+//}
 
 void MyImageViewer::SetBound(double* b)
 {
@@ -455,69 +500,6 @@ double* MyImageViewer::GetFocalPoint()
 	return Cursor3D->GetFocalPoint();
 }
 
-void MyImageViewer::RemoveInput()
-{
-
-	if (this->WindowLevel)
-	{
-		this->WindowLevel->Delete();
-		this->WindowLevel = NULL;
-	}
-	if (this->imageMapToWindowLevelColors)
-	{
-		this->imageMapToWindowLevelColors->Delete();
-		this->imageMapToWindowLevelColors = NULL;
-	}
-	if (this->ImageActor)
-	{
-		this->ImageActor->Delete();
-		this->ImageActor = NULL;
-	}
-	if (this->Renderer)
-	{
-		this->Renderer->Delete();
-		this->Renderer = NULL;
-	}
-	/*
-	if (this->RenderWindow)
-	{
-	this->RenderWindow->Delete();
-	this->RenderWindow = NULL;
-	}
-	*/
-	if (this->Interactor)
-	{
-		this->Interactor->Delete();
-		this->Interactor = NULL;
-	}
-
-	if (this->InteractorStyle)
-	{
-		this->InteractorStyle->Delete();
-		this->InteractorStyle = NULL;
-	}
-
-	if (this->SliceImplicitPlane)
-	{
-		this->SliceImplicitPlane->Delete();
-		this->SliceImplicitPlane = NULL;
-	}
-
-}
-
-void MyImageViewer::RemoveInputLayer()
-{
-	if (this->drawActor)
-	{
-		this->drawActor->Delete();
-		this->drawActor = NULL;
-	}
-
-	if (this->imageMapToWindowLevelColors)
-		this->imageMapToWindowLevelColors->Delete();
-	this->imageMapToWindowLevelColors = vtkImageMapToWindowLevelColors::New();
-
-}
 void MyImageViewer::InitializeHeader(QString File)
 {
 	int* size = Renderer->GetSize();
@@ -528,7 +510,6 @@ void MyImageViewer::InitializeHeader(QString File)
 		Renderer->RemoveActor2D(HeaderActor);
 		//HeaderActor->Delete();
 	}
-	HeaderActor = vtkTextActor::New();
 	HeaderActor->GetTextProperty()->SetFontSize(15);
 	HeaderActor->GetTextProperty()->SetColor(1.0, 0.7490, 0.0);
 	Renderer->AddActor2D(HeaderActor);

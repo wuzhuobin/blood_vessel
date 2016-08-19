@@ -63,11 +63,13 @@ bool SurfaceCreator::Update()
 	if (m_discrete)
 	{
 		double* range = m_resample->GetOutput()->GetScalarRange();
+		cout << range[0] << " range " << range[1] << endl;
 		int numValue = vtkMath::Round(range[1] - range[0]) +1;
 		
 		m_surface = vtkDiscreteMarchingCubes::New();
 		m_surface->SetNumberOfContours(numValue);
 		m_surface->GenerateValues(numValue, range[0], range[1]);
+		m_surface->SetComputeScalars(1);
 		
 	}
 	else

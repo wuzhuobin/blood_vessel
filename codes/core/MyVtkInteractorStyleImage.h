@@ -45,6 +45,7 @@
 #include <vtkWidgetEvent.h>
 #include <vtkWidgetEventTranslator.h>
 #include <vtkImageCanvasSource2D.h>
+#include <vtkObjectFactory.h>
 
 #include "MyImageViewer.h"
 class MyImageViewer;
@@ -116,7 +117,6 @@ public:
     vtkPoints* GetPointsInsideContour();
     vtkOrientedGlyphContourRepresentation* GetContourRep();
     bool FillPolygon();
-    void DrawSynchronize(vtkPolyData*);
 	void SetContourVisibility(bool b);
 	void RemoveContourWidgetAll();
     
@@ -151,9 +151,7 @@ protected:
 private:
     // Drawing points and lines tool
     vtkOrientedGlyphContourRepresentation* contourRep;
-    vtkOrientedGlyphContourRepresentation* contourRepA;
     vtkContourWidget* contourWidget;
-    vtkContourWidget* contourWidgetA;
     vtkPoints* pointsInsideContour;
     
 };

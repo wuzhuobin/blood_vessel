@@ -1,2 +1,6 @@
 #Add module to the project
-add_subdirectory(Module)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Module)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Widgets)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/AbstractInteractorStyles)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/GPURenderWithLUT)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Core)

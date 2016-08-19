@@ -1,6 +1,7 @@
 #include "MyVtkInteractorStyleImage.h"
-#include "vtkObjectFactory.h"
 #include "vtkRenderer.h"
+#include <vtkImageProperty.h>
+#include <vtkImageProperty.h>
 #include <qdebug.h>
 
 
@@ -10,9 +11,7 @@ void MyVtkInteractorStyleImage::SetImageViewer(MyImageViewer* imageViewer)
 {
 	//Contour Widget
 	contourWidget = NULL;
-	contourWidgetA = NULL;
 	contourRep = NULL;
-	contourRepA = NULL;
 	//Paint Brush
 	m_drawValueComboBox = NULL;
 	m_drawBrushShapeComboBox = NULL;
@@ -454,7 +453,7 @@ void MyVtkInteractorStyleImage::RemoveContourWidgetAll() {
 	MainWindow* mainwnd = MainWindow::GetMainWindow();
 
 	for (int i = 0; i < mainwnd->GetVisibleImageNo(); i++) {
-		mainwnd->GetMyVtkInteractorStyleImage(i)->RemoveContourWidget();
+		//mainwnd->GetMyVtkInteractorStyleImage(i)->RemoveContourWidget();
 		mainwnd->GetMyImageViewer(i)->GetRenderWindow()->Render();
 	}
 
@@ -1118,7 +1117,7 @@ bool MyVtkInteractorStyleImage::FillPolygon()
 	// enable brush to fill the contour
 	m_brush->SetDrawColor(color_r, color_g, color_b, opacity);
 
-	vtkPolyData* polydata = vtkPolyData::New();
+	vtkPolyData* polydata;
 	polydata = contourRep->GetContourRepresentationAsPolyData();
 	pointsInsideContour = vtkPoints::New();
 	vtkPolygon* polygon = vtkPolygon::New();
@@ -1235,31 +1234,6 @@ bool MyVtkInteractorStyleImage::FillPolygon()
 }
 
 
-void MyVtkInteractorStyleImage::DrawSynchronize(vtkPolyData* polydata)
-{
-	if (contourWidgetA) {
-		contourWidgetA->Delete();
-		contourWidgetA = NULL;
-	}
-
-	contourWidgetA = vtkContourWidget::New();
-	contourWidgetA->SetInteractor(imageViewer->GetRenderWindow()->GetInteractor());
-	contourWidgetA->SetCurrentRenderer(imageViewer->GetannotationRenderer());
-
-	contourRepA = vtkOrientedGlyphContourRepresentation::New();
-	contourRepA->SetRenderer(imageViewer->GetannotationRenderer());
-	contourRepA->GetLinesProperty()->SetColor(255, 255, 255);
-	contourRepA->GetProperty()->SetOpacity(0);
-	contourWidgetA->CreateDefaultRepresentation();
-	contourWidgetA->SetRepresentation(contourRepA);
-	contourWidgetA->Initialize(polydata);
-	contourWidgetA->SetRepresentation(contourRepA);
-	contourWidgetA->On();
-	imageViewer->GetRenderWindow()->Render();
-
-}
-
-
 void MyVtkInteractorStyleImage::RemoveContourWidget() {
 	if (contourWidget)
 	{
@@ -1270,19 +1244,9 @@ void MyVtkInteractorStyleImage::RemoveContourWidget() {
 		contourWidget->Delete();
 		contourWidget = NULL;
 	}
-	if (contourWidgetA)
-	{
-		contourWidgetA->Delete();
-		contourWidgetA = NULL;
-	}
 	if (contourRep) {
 		contourRep->Delete();
 		contourRep = NULL;
-	}
-	if (contourRepA) {
-		contourRepA->Delete();
-		contourRepA = NULL;
-
 	}
 	pointsInsideContour = NULL;
 
@@ -1400,14 +1364,10 @@ void MyVtkInteractorStyleImage::SetContourVisibility(bool b)
 	{
 		if (contourWidget)
 			contourWidget->SetEnabled(1);
-		if (contourWidgetA)
-			contourWidgetA->SetEnabled(1);
 	}
 	else
 	{
 		if (contourWidget)
 			contourWidget->SetEnabled(0);
-		if (contourWidgetA)
-			contourWidgetA->SetEnabled(0);
 	}
 }

@@ -50,46 +50,22 @@ PURPOSE.  See the above copyright notice for more information.
 #ifndef __MyImageViewer_h
 #define __MyImageViewer_h
 
-#include "vtkObject.h"
-#include <vtkVersion.h>
-#include "vtkInformation.h"
-#include "vtkImageViewer2.h"
+#include <vtkObjectFactory.h>
+#include <vtkImageViewer2.h>
 #include <vtkAngleWidget.h>
-#include "vtkCamera.h"
-#include "vtkCommand.h"
-#include "vtkImageActor.h"
-#include "vtkImageData.h"
-#include "vtkImageMapToWindowLevelColors.h"
-#include "vtkImageMapper3D.h"
-#include "vtkObjectFactory.h"
-#include "vtkRenderWindow.h"
-#include "vtkRenderWindowInteractor.h"
-#include "vtkRenderer.h"
-#include "vtkCursor3D.h"
-#include "vtkPolyDataMapper.h"
-#include "vtkActor.h"
-#include "vtkProperty.h"
-#include "vtkCutter.h"
-#include "vtkDataSet.h"
-#include "vtkPlane.h"
-#include "vtkLookupTable.h"
-#include "vtkImageProperty.h"
-#include "vtkTextActor.h"
-#include "vtkTextProperty.h"
-#include "vtkDistanceWidget.h"
-#include "vtkAngleWidget.h"
-#include "vtkContourWidget.h"
-#include "vtkPointHandleRepresentation2D.h"
-#include "vtkDistanceRepresentation2D.h"
-#include "vtkStreamingDemandDrivenPipeline.h"
-#include "vtkAngleRepresentation2D.h"
-#include "vtkSmartPointer.h"
-#include "vtkAxisActor2D.h"
-#include "vtkProperty2D.h"
-#include "vtkLeaderActor2D.h"
-#include "vtkTransform.h"
-#include "vtkImageViewer2.h"
-#include "vtkInteractorStyleImage.h"
+#include <vtkDistanceWidget.h>
+#include <vtkAngleWidget.h>
+#include <vtkTextActor.h>
+#include <vtkImageMapToWindowLevelColors.h>
+#include <vtkPlane.h>
+#include <vtkLogLookupTable.h>
+#include <vtkImageActor.h>
+#include <vtkCursor3D.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkActor.h>
+#include <vtkRenderer.h>
+#include <vtkImageData.h>
+#include <vtkInteractorStyleImage.h>
 
 #include <QString>
 
@@ -108,17 +84,14 @@ public:
 	// Render the resulting image.
 	virtual void Render(void);
 
-	void virtual SetInputData(vtkImageData * in);
-
 	// Description:
 	// Set/Get the input image to the viewer.
-	virtual void RemoveInput();
+	void virtual SetInputData(vtkImageData * in);
 	// Set Input Layer
 	virtual void SetInputDataLayer(vtkImageData *in);
 	virtual vtkImageData *GetInputLayer();
-	virtual void RemoveInputLayer();
 
-	virtual void AddPolyData(vtkPolyData* polydata, vtkProperty* property);
+	//virtual void AddPolyData(vtkPolyData* polydata, vtkProperty* property);
 
 	// Description:
 	// Set window and level for mapping pixels to colors.
@@ -192,7 +165,6 @@ protected:
 	vtkDistanceWidget* DistanceWidget;
 
 	vtkAngleWidget*	 AngleWidget;
-	vtkContourWidget*  ContourWidget;
 	//Parameter
 	vtkPlane* SliceImplicitPlane;
 	double DefaultWindowLevel[2];

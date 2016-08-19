@@ -31,9 +31,8 @@ public:
 	MyImageViewer* GetImageViewer();
 
 private:
-	double* m_deafultBound;
-	double* m_currentBound;
-	double m_displayBounf[6];
+	double m_deafultBound[6];
+	double m_currentBound[6];
 	MyImageViewer* m_2DImageViewer;
 };
 

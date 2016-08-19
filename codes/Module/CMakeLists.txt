@@ -1,3 +1,5 @@
+
+project(Module)
 SET(
   CMAKE_PREFIX_PATH
   "C:/Program Files (x86)/Windows Kits/8.1/Lib/winv6.3/um/x64"
@@ -27,56 +29,89 @@ else()
 endif()
 
 #link other libraries
-link_directories(${PROJECT_SOURCE_DIR}/lib)
+link_directories(
+	${PROJECT_SOURCE_DIR}/lib
+	)
 
 include_directories(
 	${PROJECT_BINARY_DIR}
-	${PROJECT_SOURCE_DIR}/include
-	${PROJECT_SOURCE_DIR}/codes/core
-	${PROJECT_SOURCE_DIR}/build/codes/Module
-	${PROJECT_SOURCE_DIR}/codes/Module/GUI
-	${PROJECT_SOURCE_DIR}/codes/Module/Pipeline
+	${MAIN_INCLUDE_DIRS}
 	)
 
-SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
-
-SET(MODULE_INC_LIST
-	${PROJECT_SOURCE_DIR}/include/Define.h
+SET(
+	LIBRARY_OUTPUT_PATH
+	${CMAKE_SOURCE_DIR}/lib
+	${EXECUTABLE_OUTPUT_PATH}
 )
 
-SET(MODULE_SRC_LIST
+# SET(
+	# MODULE_INC_LIST
+	# ${CMAKE_SOURCE_DIR}/include/Define.h
+ # )
 
+SET(
+	MODULE_SRC_LIST
 )
 
 SET(MODULE_QT_INC 
-	${PROJECT_SOURCE_DIR}/codes/Module/GUI/ModuleWidget.h
-	${PROJECT_SOURCE_DIR}/codes/Module/GUI/MyThread.h
+	${PROJECT_SOURCE_DIR}/ModuleWidget.h
+	${PROJECT_SOURCE_DIR}/MyThread.h
 )
 
 SET(MODULE_QT_SRC 
-	${PROJECT_SOURCE_DIR}/codes/Module/GUI/ModuleWidget.cxx
-	${PROJECT_SOURCE_DIR}/codes/Module/GUI/MyThread.cxx
+	${PROJECT_SOURCE_DIR}/ModuleWidget.cxx
+	${PROJECT_SOURCE_DIR}/MyThread.cxx
 )
 
 SET(MODULE_QT_UI 
-	${PROJECT_SOURCE_DIR}/codes/Module/GUI/ModuleWidget.ui
+	${PROJECT_SOURCE_DIR}/ModuleWidget.ui
 )
 
 #Generate moc and ui file
 QT5_WRAP_UI(UISrcs ${MODULE_QT_UI})
 QT5_WRAP_CPP(MOCSrcs ${MODULE_QT_INC})
 
-add_library(Module STATIC ${MODULE_SRC_LIST} ${MODULE_INC_LIST} ${UISrcs} ${MOCSrcs} ${MODULE_QT_SRC} ${MODULE_QT_INC})
+add_library(
+	Module 
+	${MODULE_SRC_LIST}
+	${MODULE_INC_LIST}
+	${UISrcs}
+	${MOCSrcs} 
+	${MODULE_QT_SRC} 
+	${MODULE_QT_INC}
+	)
 
 #link libraries
-target_link_libraries(Module ${ITK_LIBRARIES}  ${VTK_LIBRARIES} Qt5::Widgets Qt5::PrintSupport)
+target_link_libraries(
+	Module
+	${ITK_LIBRARIES}  
+	${VTK_LIBRARIES}
+	Qt5::Widgets 
+	Qt5::PrintSupport
+	)
 
 #Grouping in MSVC
-SOURCE_GROUP("_Generated"	FILES ${UISrcs})
-SOURCE_GROUP("_Moc Files" 	FILES ${MOCSrcs})
-SOURCE_GROUP("UI FILES" 	FILES ${MODULE_QT_UI})
-SOURCE_GROUP("Header Files" FILES ${MODULE_QT_INC})
-SOURCE_GROUP("Header Files" FILES ${MODULE_INC_LIST})
-SOURCE_GROUP("Source Files" FILES ${MODULE_QT_SRC})
-SOURCE_GROUP("Source Files" FILES ${MODULE_SRC_LIST})
+SOURCE_GROUP(
+	"Generated Files"
+	FILES 
+	${UISrcs}
+	${MOCSrcs}
+	)
+SOURCE_GROUP(
+	"UI FILES" 	
+	FILES 
+	${MODULE_QT_UI}
+	)
+SOURCE_GROUP(
+	"Header Files" 
+	FILES 
+	${MODULE_QT_INC}
+	${MODULE_INC_LIST}
+	)
+SOURCE_GROUP(
+	"Source Files" 
+	FILES 
+	${MODULE_QT_SRC}
+	${MODULE_SRC_LIST}
+	)
 

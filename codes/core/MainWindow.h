@@ -1,67 +1,29 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QDebug>
 #include <QMainWindow>
 #include <QDragEnterEvent> 
 #include <QDropEvent>
 #include <QAction>
-#include <QUrl>
-#include <QSettings>
-#include <QFileInfo>
-#include <QFileDialog>
-#include <QMessageBox>
-#include <QMimeData>
-#include <QFuture>
-#include <QMenu>
 #include <QActionGroup>
-#include <QSignalMapper>
+#include <QMenu>
 
 #include "ui_MainWindow.h"
 
-#include "vtkCamera.h"
-#include "vtkImageMapToWindowLevelColors.h"
-#include "vtkMarchingCubes.h"
-#include "vtkSmoothPolyDataFilter.h"
-#include "vtkWindowedSincPolyDataFilter.h"
-#include "vtkPolyDataMapper.h"
-#include "vtkActor.h"
-#include "vtkImageAccumulate.h"
-#include "vtkImageDataGeometryFilter.h"
-#include "vtkRendererCollection.h"
-#include "vtkRenderWindow.h"
-#include "vtkTextMapper.h"
-#include "vtkImageProperty.h"
-#include "vtkImageActor.h"
-#include "vtkImageData.h"
-#include "vtkPolyData.h"
-#include <vtkCellData.h>
-#include <vtkSphereSource.h>
-#include <vtkVersion.h>
-#include <vtkDistanceRepresentation3D.h>
-#include <vtkDistanceRepresentation2D.h>
-#include "vtkDistanceWidget.h"
-#include "vtkPointHandleRepresentation3D.h"
-#include <vtkLookupTable.h>
-#include <vtkSmartPointer.h>
+#include <vtkActor.h>
+#include <vtkImageData.h>
+#include <vtkPolyData.h>
 
 //Own Class
 #include "Define.h"
-#include "RegistrationWizard.h"
-#include "MyVtkInteractorStyleImage.h"
 #include "MyImageViewer.h"
-#include "MyProgressDialog.h"
-#include "ModuleWidget.h"
+#include "InteractorStyleSwitch.h"
 #include "InfoDialog.h"
-#include "ImageRegistration.h"
-#include "MyPlaneWidget.h"
 #include "Overlay.h"
-#include "SurfaceCreator.h"
-#include "VesselSegmentation.h"
-#include "ExtractCenterline.h"
-
+#include "Distance3DWidget.h"
 
 class ModuleWidget;
-class MyVtkInteractorStyleImage;
 class MainWindow: public QMainWindow
 {
 	Q_OBJECT
@@ -69,19 +31,28 @@ public:
 	explicit MainWindow(); 	
 
 	static MainWindow* GetMainWindow();
-    MyImageViewer* GetMyImageViewer(int);
-    MyVtkInteractorStyleImage* GetMyVtkInteractorStyleImage(int);
+	vtkRenderWindow* GetRenderWindow(int i);
+	MyImageViewer* GetMyImageViewer(int i) {
+		return m_2DimageViewer[i]; 
+	};
+	InteractorStyleSwitch* GetInteractorStyleImageSwitch(int i) {
+		return m_style[i];
+	};
+	vtkRenderWindowInteractor* GetVtkRenderWindowInteractor(int i) {
+		return m_interactor[i];
+	};
 	QString GetFileName(int);
 
 	int GetVisibleImageNo();
 	void RenderAllViewer();
+	void RenderAll2DViewers();
 	void Set3DRulerEnabled(bool b);
 	void SetImageLayerNo(int);
 	int GetImageLayerNo();
 	Overlay* GetOverlay();
 	~MainWindow();
 	
-	enum
+	enum SLICE_ORIENTATION
   {
     SLICE_ORIENTATION_YZ = 0,
     SLICE_ORIENTATION_XZ = 1,
@@ -114,6 +85,7 @@ public slots:
 	virtual void slotWindowLevelMode();
 	virtual void slotBrushMode();
 	virtual void slotContourMode();
+	virtual void slotROIMode();
 	virtual void slotImage(int image);
 	virtual void slotMultiPlanarView();
 
@@ -125,7 +97,7 @@ public slots:
 	//virtual void slotRemoveOverlay();
 	virtual void slotOverlayVisibilty(bool b);
 	virtual void slotOverlayVisibilty(bool b, int);
-    virtual void slotOverlayOpacity(double);
+    virtual void slotOverlayOpacity(double op);
   
 	//Centerline
 	virtual void slotCenterline();
@@ -141,8 +113,9 @@ public slots:
 
 	//Widget
 	virtual void slotRuler(bool b);
-	virtual void slotSetROIWidgetEnabled(bool b);
+	virtual void slotChangeROI(double* bound);
 	virtual void slotSelectROI();
+	virtual void slotResetROI();
 
 	//Widget running 
 	virtual void slotShowProgressDialog(int value, QString text);
@@ -153,7 +126,7 @@ public slots:
 
 private:
 	//UI
-	Ui_MainWindow ui;
+	Ui_MainWindow* ui;
 	void setActionsEnable(bool b);
 
 	//menu for changing images
@@ -161,28 +134,30 @@ private:
 	QMenu ChangeBaseImageURMenu;
 	QMenu ChangeBaseImageLLMenu;
 
+	//widgetGroup
+	QActionGroup widgetGroup;
+	//viewerGroup 
+	QActionGroup viewerGroup;
+	//viewGroup
+	QActionGroup viewGroup;
+
+
     
 	//2D/3D view
-	MyImageViewer*				m_2DimageViewer[5];
+	MyImageViewer*				m_2DimageViewer[3];
+	vtkRenderWindow*			m_3DimageViewer;
+	vtkRenderer*				m_3DDataRenderer;
+	vtkRenderer*				m_3DAnnotationRenderer;
 	vtkRenderWindowInteractor*  m_3Dinteractor;
 	vtkRenderWindowInteractor*  m_interactor[3];
-	MyVtkInteractorStyleImage*	m_style[3];
+	InteractorStyleSwitch*		m_style[3];
 
-    //ROI
-	MyPlaneWidget*			m_planeWidget[3];
-	MyPlaneWidgetCallback*	m_planeWidgetCallback[3];
-	double	m_currentBound[6];
-	bool	m_settingROI;
 
     //File Name
-    QStringList FileNameList1;
-    QStringList FileNameList2;
-    QStringList FileNameList3;
-    QStringList FileNameList4;
-    QStringList FileNameList5;
+	QStringList FileNameList[5];
     
 	//3D ruler
-	vtkDistanceWidget* DistanceWidget3D;
+	Distance3DWidget* m_distance3DWidget;
 	//Recent File
 	int m_maxRecentImage;
 	QList<QAction*> recentFileActionList;
@@ -198,17 +173,11 @@ private:
 	
 	//Data
 	ImageType::Pointer  ImageAlignment(ImageType::Pointer);
-	ImageType::Pointer	m_itkT1;
-	ImageType::Pointer	m_itkT2;
-	ImageType::Pointer	m_itkT1C;
-	ImageType::Pointer	m_itk2DDIR;
-	ImageType::Pointer	m_itkMPRAGE;
-	vtkImageData*		m_vtkT1;
-	vtkImageData*		m_vtkT2;
-	vtkImageData*		m_vtkT1C;
-    vtkImageData*		m_vtk2DDIR;
-	vtkImageData*		m_vtkMPRAGE;
-	//vtkPolyData*		m_vtkOutputPolyData;
+	ImageType::Pointer itkImage[5];
+	
+	vtkImageData* vtkImage[5];
+	vtkImageData* vtkImageOriginal[5];
+	vtkImageData* vtkImageOverlay;
 
     //Orientation
 	int m_orientation;
@@ -226,6 +195,7 @@ private:
 
 	//Segmentation view flag
 	bool segmentationView;
+	bool INITIALIZED_FLAG;
 
 
 	//Overlay
